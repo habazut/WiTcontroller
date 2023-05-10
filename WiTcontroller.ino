@@ -55,7 +55,7 @@ class MyDelegate : public WiThrottleProtocolDelegate {
       heartBeatPeriod = seconds;
     }
     void receivedVersion(String version) {    
-      debug_printf("Received Version: %s\n",version); 
+      debug_printf("Received Version: %s\n",version.c_str()); 
     }
     void receivedServerDescription(String description) {
       debug_print("Received Description: ");
@@ -165,9 +165,11 @@ void browseSsids(){ // show the found SSIDs
   oledText[2] = msg_browsing_for_ssids;
   writeOledArray(false, false);
 
-  int numSsids = WiFi.scanNetworks();
-  while ( (numSsids == -1)
-    && ((nowTime-startTime) <= 10000) ) { // try for 10 seconds
+  int numSsids = 0;
+  while (((nowTime-startTime) <= 10000) ) { // try for 10 seconds
+    numSsids = WiFi.scanNetworks();
+    if (numSsids > 0)
+      break;
     delay(250);
     debug_print(".");
     nowTime = millis();
@@ -325,11 +327,11 @@ void connectSsid() {
   double startTime = millis();
   double nowTime = startTime;
 
-  const char *cSsid = selectedSsid.c_str();
-  const char *cPassword = selectedSsidPassword.c_str();
+//  const char *cSsid = selectedSsid.c_str();
+//  const char *cPassword = selectedSsidPassword.c_str();
 
-  if (cSsid!="") {
-    debug_print("Trying Network "); debug_println(cSsid);
+  if (selectedSsid.length() > 0) {
+    debug_print("Trying Network "); debug_println(selectedSsid);
     clearOledArray(); 
     setAppnameForOled(); 
     for (int i = 0; i < 3; ++i) {  // Try three times
@@ -337,9 +339,9 @@ void connectSsid() {
       writeOledArray(false, false);
 
       nowTime = startTime;      
-      WiFi.begin(cSsid, cPassword); 
+      WiFi.begin(selectedSsid.c_str(), selectedSsidPassword.c_str()); 
 
-      debug_print("Trying Network ... Checking status "); debug_print(cSsid); debug_print(" :"); debug_print(cPassword); debug_println(":");
+      debug_print("Trying Network ... Checking status "); debug_print(selectedSsid.c_str()); debug_println(":");
       while ( (WiFi.status() != WL_CONNECTED) 
         && ((nowTime-startTime) <= 10000) ) { // wait for X seconds to see if the connection worked
         delay(250);
@@ -414,7 +416,7 @@ void browseWitService(){
   const char * service = "withrottle";
   const char * proto= "tcp";
 
-  debug_printf("Browsing for service _%s._%s.local. on %s ... ", service, proto, selectedSsid);
+  debug_printf("Browsing for service _%s._%s.local. on %s ... ", service, proto, selectedSsid.c_str());
   clearOledArray(); 
   oledText[0] = appName; oledText[6] = appVersion; 
   oledText[1] = selectedSsid;   oledText[2] = msg_browsing_for_service;
@@ -825,7 +827,7 @@ void loop() {
       }
     }
   }
-  char key = keypad.getKey();
+  /*char key = */keypad.getKey();
   rotary_loop();
 
 	// debug_println("loop:" );
@@ -943,7 +945,7 @@ void doKeyPress(char key, boolean pressed) {
             selectSsid(key - '0');
             break;
           case '#': // show found SSIds
-            ssidConnectionState = CONNECTION_STATE_DISCONNECTED;
+            //ssidConnectionState = CONNECTION_STATE_DISCONNECTED;
             keypadUseType = KEYPAD_USE_SELECT_SSID_FROM_FOUND;
             ssidSelectionSource = SSID_CONNECTION_SOURCE_BROWSE;
             // browseSsids();
@@ -1231,7 +1233,7 @@ void doMenu() {
         String subcommand = menuCommand.substring(1, menuCommand.length());
         if (subcommand.equals("")) { // no subcommand is specified   
           if (witConnectionState == CONNECTION_STATE_CONNECTED) {
-            witConnectionState == CONNECTION_STATE_DISCONNECTED;
+            //witConnectionState == CONNECTION_STATE_DISCONNECTED;
             disconnectWitServer();
           } else {
             connectWitServer();
@@ -1502,7 +1504,7 @@ void writeOledFoundSSids(String soFar) {
     oledText[5] = menu_select_ssids_from_found;
     writeOledArray(false, false);
   } else {
-    int cmd = menuCommand.substring(0, 1).toInt();
+    /*int cmd = */menuCommand.substring(0, 1).toInt();
   }
 }
 
@@ -1519,7 +1521,7 @@ void writeOledRoster(String soFar) {
     oledText[5] = menu_roster;
     writeOledArray(false, false);
   } else {
-    int cmd = menuCommand.substring(0, 1).toInt();
+    /*int cmd = */menuCommand.substring(0, 1).toInt();
   }
 }
 
@@ -1534,13 +1536,17 @@ void writeOledTurnoutList(String soFar, TurnoutAction action) {
     clearOledArray();
     int j = 0;
     for (int i=0; i<10 && i<turnoutListSize; i++) {
-      j = (i<5) ? j=i : j = i+1;
+      if (i<5) {
+	j = i;
+      } else {
+	j = i+1;
+      }
       oledText[j] = String(turnoutListIndex[i]) + ": " + turnoutListUserName[(page*10)+i].substring(0,10);
     }
     oledText[5] = menu_turnout_list;
     writeOledArray(false, false);
   } else {
-    int cmd = menuCommand.substring(0, 1).toInt();
+    /*int cmd =*/ menuCommand.substring(0, 1).toInt();
   }
 }
 
@@ -1551,13 +1557,17 @@ void writeOledRouteList(String soFar) {
     clearOledArray();
     int j = 0;
     for (int i=0; i<10 && i<routeListSize; i++) {
-      j = (i<5) ? j=i : j = i+1;
+      if (i<5) {
+	j = i;
+      } else {
+	j = i+1;
+      }
       oledText[j] = String(routeListIndex[i]) + ": " + routeListUserName[(page*10)+i].substring(0,10);
     }
     oledText[5] = menu_route_list;
     writeOledArray(false, false);
   } else {
-    int cmd = menuCommand.substring(0, 1).toInt();
+    /*int cmd =*/ menuCommand.substring(0, 1).toInt();
   }
 }
 
@@ -1586,7 +1596,11 @@ void writeOledMenu(String soFar) {
     clearOledArray();
     int j = 0;
     for (int i=1; i<10; i++) {
-      j = (i<6) ? j=i : j = i+1;
+      if (i<6) {
+	j = i;
+      } else {
+	j = i+1;
+      }
       oledText[j-1] = String(i) + ": " + menuText[i][0];
     }
     oledText[10] = "0: " + menuText[0][0];
